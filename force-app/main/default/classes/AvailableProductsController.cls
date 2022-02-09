@@ -30,16 +30,18 @@ public with sharing class AvailableProductsController {
             oi.Quantity = 1;
             oi.UnitPrice = unitPrice;
             insert oi;
+            System.debug('[AvailableProductsController] New OrderItem created!');
         }
         else if (lstOI.size() == 1) {
             // There's already this product on the order, let's increase the quantity by 1.
             lstOI.get(0).Quantity += 1;
             update lstOI;
+            System.debug('[AvailableProductsController] Existing OrderItem updated!');
         }
         else {
             // We have a problem, somehow the product has more than 1 OrderItem record on the order. 
             // That would need to be handled somehow or prevented. For now I'm skipping such a case.
-            System.debug('Warning - the product has more than one OrderItem record on the Order, it\'s ignored.');
+            System.debug('[AvailableProductsController] The product has more than one OrderItem record on the Order, it\'s wrong but currently I do nothing about it.');
         }
 
     }

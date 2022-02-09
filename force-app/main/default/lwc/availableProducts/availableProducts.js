@@ -94,7 +94,7 @@ export default class AvailableProducts extends LightningElement {
             if(this.orderedProds) {
                 this.orderedProds.forEach(orderedRow => {
                     let flattenedRow = {};
-                    flattenedRow.Id = orderedRow.Id;
+                    flattenedRow.Id = orderedRow.PbeId;
                     flattenedRow.ProductName = orderedRow.ProductName;
                     flattenedRow.UnitPrice = orderedRow.UnitPrice;
                     arrOfProds.push(flattenedRow);
@@ -149,7 +149,7 @@ export default class AvailableProducts extends LightningElement {
                         console.log('error while adding product to the order: ' + JSON.stringify(error));
                         console.log('PBE used is: ' + row.Id);
                         this.error = error;
-                        this.dispatchToastInfo('Error while adding product to the Order!');
+                        this.dispatchToastError('Error while adding product to the Order!');
                     });
                 break;
             default:
@@ -159,7 +159,7 @@ export default class AvailableProducts extends LightningElement {
     dispatchToastInfo(msg) {
         this.dispatchEvent(
             new ShowToastEvent({
-                title: 'Info',
+                title: 'Success',
                 message: msg,
                 variant: 'success'
             })
@@ -170,7 +170,7 @@ export default class AvailableProducts extends LightningElement {
         this.dispatchEvent(
             new ShowToastEvent({
                 title: 'Error',
-                message: reduceErrors(err).join(', '),
+                message: err,
                 variant: 'error'
             })
         );
