@@ -1,0 +1,18 @@
+<template>
+    <lightning-card title="Available Products">
+        <lightning-button label="TEST" slot="actions" onclick={handleClick}></lightning-button>
+        <p class="slds-var-p-horizontal_small">Card Body (custom component)</p>
+        <template if:true={availProds}>
+            <div style="height: 300px;">
+                <!-- sldsValidatorIgnoreNextLine -->
+                <lightning-datatable
+                        key-field="Id"
+                        data={availProds}
+                        columns={columns}
+                        onrowaction={handleRowAction}>
+                </lightning-datatable>
+            </div>
+        </template>
+        <p slot="footer">Card Footer</p>
+    </lightning-card>
+</template>

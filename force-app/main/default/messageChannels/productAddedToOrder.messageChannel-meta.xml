@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningMessageChannel xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>productAddedToOrder</masterLabel>
+    <isExposed>true</isExposed>
+    <description>Lightning Message Channel to be published when product is added to an order.</description>
+    <lightningMessageFields>
+        <fieldName>orderId</fieldName>
+        <description>Id of an order where product is added.</description>
+    </lightningMessageFields>
+    <lightningMessageFields>
+        <fieldName>pbeId</fieldName>
+        <description>Id of Pricebook Entry for a product being added to the order.</description>
+    </lightningMessageFields>
+</LightningMessageChannel>
