@@ -32,6 +32,9 @@ public with sharing class OrderItemTriggerHandler {
         // Since we want to block changes on Activated Orders, I'm retrieving only relevant records.
         // Query could be moved to a data selector class if exists.
         Set<Id> activatedOrders = new Map<Id, Order>([SELECT Id FROM Order WHERE Id IN :orderIds AND StatusCode = 'Activated']).keySet();
+        // If there's no activated Orders then there's nothing to validate.
+        if (activatedOrders.isEmpty()) return;
+
         for (OrderItem oi : newOIs) {
             // If Order related to currently processed OrderItem is present in the set it means it's Activated and operation should be blocked.
             if(activatedOrders.contains(oi.OrderId)) {
@@ -49,6 +52,9 @@ public with sharing class OrderItemTriggerHandler {
         // I build a map showing all products (PricebookEntries to be specific) on the Orders related to processed OrderItems.
         // First query some fields from OrderItems being processed.
         List<OrderItem> existingOIs = new List<OrderItem>([SELECT Id, OrderId, PricebookEntryId FROM OrderItem WHERE OrderId IN :orderIds]);
+        // If there're no existing Order Items for any of Orders then there's nothing to validate.
+        if (existingOIs.isEmpty()) return;
+        
         // Then construct a map containing info on which Pricebook Entries are already added to which Orders
         Map<Id, List<Id>> mapOrderIdByExistingPbeId = new Map<Id, List<Id>>();
         for (OrderItem oi : existingOIs) {
