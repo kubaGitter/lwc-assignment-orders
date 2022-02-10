@@ -48,7 +48,6 @@ export default class LightOrderProducts extends LightningElement {
     wiredOrder(result) {
         if (result.data) {
             this.orderStatus = result.data.fields.StatusCode.value;
-
             this.wasActivated = this.orderStatus == 'Activated' ? true : false;
             this.error = undefined;
         }
@@ -94,7 +93,10 @@ export default class LightOrderProducts extends LightningElement {
         activateOrder( { orderId: this.recordId } )
             .then(result => {
                 this.wasActivated = true;
+                this.dispatchToast('Order activated!', 'success');
                 console.log('Success at activation');
+                // force refresh of the page to reflect the change of status
+                eval("$A.get('e.force:refreshView').fire();");
             })
             .catch(error => {
                 console.log('Error at activation: ' +JSON.stringify(error));
