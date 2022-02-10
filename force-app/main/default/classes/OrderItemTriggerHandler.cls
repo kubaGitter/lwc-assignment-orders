@@ -5,19 +5,16 @@ public with sharing class OrderItemTriggerHandler {
 
 
     public static void onBeforeInsert(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
-        validateChange(oldOIs, newOIs);
+        validateParentOrderStatus(oldOIs, newOIs);
+        validateDuplicates(oldOIs, newOIs);
     }
 
 
     public static void onBeforeUpdate(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
-        validateChange(oldOIs, newOIs);
-    }
-
-
-    private static void validateChange(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
-        // Validation logic can be put here in one place and shared between insert and update.
+        // The validation logic for update should be different than for insert.
+        // The PricebookEntryId field is not writtable, i.e. once Order Item is created it cannot be changed.
+        // Therefore, there's no need to check for duplicates in a situation when existing records are being updated (update trigger operation).
         validateParentOrderStatus(oldOIs, newOIs);
-        validateDuplicates(oldOIs, newOIs);
     }
 
 
