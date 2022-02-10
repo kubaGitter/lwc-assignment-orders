@@ -5,10 +5,22 @@ public with sharing class OrderItemTriggerHandler {
     }
 
     public static void onBeforeInsert(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
-        //validate...
+        validateChange(oldOIs, newOIs);
     }
 
     public static void onBeforeUpdate(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
+        validateChange(oldOIs, newOIs);
+    }
+
+    private static void validateChange(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
+        
+        // Validation logic can be put here in one place and shared between insert and update.
+        validateParentOrderStatus(oldOIs, newOIs);
+        validateDuplicates(oldOIs, newOIs);
+    }
+
+    private static void validateParentOrderStatus(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
+
         // Instead of SOQL below, a formula could be used to bring status of Order to the OrderItem level.
         // Therefore we could save a query if needed.
         // In this case however I'll implement fully in code as per requirement.
@@ -34,8 +46,35 @@ public with sharing class OrderItemTriggerHandler {
         }
     }
 
-    private static void validateChange(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
-        // Validation logic can be put here in one place and shared between insert and update.
+    private static void validateDuplicates(List<OrderItem> oldOIs, List<OrderItem> newOIs) {
+
+        // Collect all Order Ids which are processed in this bulk
+        // Potentially extract logic to separate function as it's the same as in the other validation method.
+        Set<Id> orderIds = new Set<Id>();
+        for (OrderItem oi : newOIs) {
+            orderIds.add(oi.OrderId);
+        }
+
+        // I build a map showing all products (PricebookEntries to be specific) on the Orders related to processed OrderItems.
+        // First query some fields from OrderItems being processed.
+        List<OrderItem> existingOIs = new List<OrderItem>([SELECT Id, OrderId, PricebookEntryId FROM OrderItem WHERE OrderId IN :orderIds]);
+        // Then construct a map containing info on which Pricebook Entries are already added to which Orders
+        Map<Id, List<Id>> mapOrderIdByExistingPbeId = new Map<Id, List<Id>>();
+        for (OrderItem oi : existingOIs) {
+            if (mapOrderIdByExistingPbeId.containsKey(oi.OrderId)) {
+                mapOrderIdByExistingPbeId.get(oi.OrderId).add(oi.PricebookEntryId);
+            }
+            else {
+                mapOrderIdByExistingPbeId.put(oi.OrderId, new List<Id> { oi.PricebookEntryId });
+            }
+        }
+        // Having the map prepared, I can use it to search for potential duplicates in records passed to the trigger.
+        for (OrderItem oi : newOIs) {
+            if (mapOrderIdByExistingPbeId.get(oi.OrderId).contains(oi.PricebookEntryId)) {
+                oi.addError('The product is already on the order and cannot be added as a separate item.');
+            }
+        }
+
     }
 
 }
