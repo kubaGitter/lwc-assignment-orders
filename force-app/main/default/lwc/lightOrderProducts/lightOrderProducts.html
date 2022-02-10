@@ -1,0 +1,18 @@
+<template>
+    <lightning-card title="Light Order Products">
+        <lightning-button label="Activate" slot="actions" onclick={handleActivate} variant="success" disabled={wasActivated}></lightning-button>
+        <template if:true={orderItems}>
+                <!-- sldsValidatorIgnoreNextLine -->
+                <lightning-datatable
+                        key-field="Id"
+                        data={orderItems}
+                        columns={columns}
+                        sorted-by={sortedBy}
+                        sorted-direction={sortedDirection}
+                        onsort={handleColumnSorting}
+                        hide-checkbox-column="true"
+                        >
+                </lightning-datatable>
+        </template>
+    </lightning-card>    
+</template>
