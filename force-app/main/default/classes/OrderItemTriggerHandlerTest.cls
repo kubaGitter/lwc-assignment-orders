@@ -96,7 +96,6 @@ private with sharing class OrderItemTriggerHandlerTest {
                 Quantity = 5,
                 UnitPrice = 100
                 );
-            System.debug('OI#' +i+ ': ' +JSON.serialize(oi));
             lstOrderItems.add(oi);
         }
         insert lstOrderItems;
@@ -104,18 +103,6 @@ private with sharing class OrderItemTriggerHandlerTest {
         
     }
     
-    @isTest
-    public static void testParentOrderStatusValidation() {
-
-    }
-
-    @isTest
-    public static void testDuplicateValidation() {
-
-    }
-
-
-
     // Test method checking if validation fails on Order Item insert when related Order is activated.
     // @TestSetup method added only ProdA to test Order. Now I'm trying to add ProdB.
     // This should be blocked by Order.Status related validation.
@@ -127,23 +114,20 @@ private with sharing class OrderItemTriggerHandlerTest {
         o.Status = 'Activated';
         update o;
 
-        Map<String, Id> mapProdCodeByPbeId = getProdCodeByPbeIdMap();
-
-        OrderItem oi = new OrderItem(
-            OrderId = o.Id,
-            PricebookEntryId = mapProdCodeByPbeId.get('PROD_B_TST'),
-            Quantity = 5,
-            UnitPrice = 100
-        );            
+        OrderItem oi = createTestOrderItem(o, 'PROD_B_TST');
 
         Test.startTest();
         try {
             insert oi;
         }
         catch (DmlException de) {
+            // Test if the exception was thrown as expected.
             System.assert(de.getMessage().contains(Constants.ERRMSG_ORDERITEM_ACTIVATEDORDER), 'Insert should fail due to parent order being activated.');
         }
         Test.stopTest();
+
+        // Test if insert was prevented and there's still only one Order Item.
+        System.assertEquals(1, getNumberOfOrderItems(o), 'Insert succeeded while it should fail due to related Order being Activated.');
     }
 
     // Test method checks if adding a new (not existing) Order Item to the Order works, i.e. allows to add an item.
@@ -153,42 +137,100 @@ private with sharing class OrderItemTriggerHandlerTest {
     public static void addNewItemToDraftOrder() {
 
         Order o = getTestOrder();
-        Map<String, Id> mapProdCodeByPbeId = getProdCodeByPbeIdMap();
-
-        OrderItem oi = new OrderItem(
-            OrderId = o.Id,
-            PricebookEntryId = mapProdCodeByPbeId.get('PROD_B_TST'),
-            Quantity = 5,
-            UnitPrice = 100
-        );            
+        OrderItem oi = createTestOrderItem(o, 'PROD_B_TST');
 
         Test.startTest();
         try {
             insert oi;
         }
         catch (DmlException de) {
+            // Test if the exception was thrown while this time it should succeed.
             System.assert(false, 'Insert should succeed but failed due to: ' +de.getMessage());
         }
         Test.stopTest();
+
+        // Test if insert was successful and there're two Order Items now.
+        System.assertEquals(2, getNumberOfOrderItems(o), 'Insert seemed to succeed but the new Order Item is not created.');
         
     }
 
-
+    // Test method checks if validation prevents adding an Order Item for a product which is already ordered.
+    // @TestSetup method added ProdA to test Order. Now I'm trying to add ProdA again.
+    // This should be blocked by duplicate-related validation.
     @isTest
     public static void addDuplicateItemToDraftOrder() {
-        
+        Order o = getTestOrder();
+        OrderItem oi = createTestOrderItem(o, 'PROD_A_TST');
+
+        Test.startTest();
+        try {
+            insert oi;
+        }
+        catch (DmlException de) {
+            // Test if the exception was thrown as expected.
+            System.assert(de.getMessage().contains(Constants.ERRMSG_ORDERITEM_DUPLICATEITEM), 'Insert should fail due to duplicate product being added to the Order.');
+        }
+        Test.stopTest();
+
+        // Test if insert was prevented and there's still only one Order Item.
+        System.assertEquals(1, getNumberOfOrderItems(o), 'Insert succeeded while it should fail due to duplicate Order Item being added.');
     }
 
 
+    // Test method checks if validation prevents modification of an Order Item on Order which was activated.
+    // This should be blocked by Order.Status-related validation.
     @isTest
     public static void modifyItemOnActivatedOrder() {
+
+        Order o = getTestOrder();
+        o.Status = 'Activated';
+        update o;
+
+        OrderItem oi = getTestOrderItem(o);
+        oi.Quantity = 99;
+
+        Test.startTest();
+        try {
+            update oi;
+        }
+        catch (DmlException de) {
+            // Test if the exception was thrown as expected.
+            System.assert(de.getMessage().contains(Constants.ERRMSG_ORDERITEM_ACTIVATEDORDER), 'Update should fail due to parent order being activated.');
+        }
+        Test.stopTest();
+
+        // Test if quantity has not been modified. Need to re-query from database to see if the value actually persisted.
+        OrderItem oi2 = [SELECT Id, Quantity FROM OrderItem WHERE Id = :oi.Id];
+        System.assertNotEquals(99, oi2.Quantity, 'Update succeeded while it should fail due to parent order being activated.');
         
     }
 
+
+    // Test method checks if modification of an Order Item on draft Order is allowed.
     @isTest
     public static void modifyItemOnDraftOrder() {
-        
+
+        Order o = getTestOrder();
+        OrderItem oi = getTestOrderItem(o);
+        oi.Quantity = 99;
+
+        Test.startTest();
+        try {
+            update oi;
+        }
+        catch (DmlException de) {
+            // Test if no exception was thrown.
+            System.assert(false, 'Update should succeed but failed due to: ' +de.getMessage());
+        }
+        Test.stopTest();
+
+        // Test if quantity has been modified. Need to re-query from database to see if the value actually persisted.
+        OrderItem oi2 = [SELECT Id, Quantity FROM OrderItem WHERE Id = :oi.Id];
+        System.assertEquals(99, oi2.Quantity, 'Update succeeded but the quantity has not been modified.');
+
     }
+
+
 
     /* HELPER METHODS */
 
@@ -210,6 +252,31 @@ private with sharing class OrderItemTriggerHandlerTest {
         
         return mapProdCodeByPbeId;
 
+    }
+
+    // Helper method to get existing test Order Item.
+    private static OrderItem getTestOrderItem(Order o) {
+        return [SELECT Id, Quantity FROM OrderItem LIMIT 1];
+    }
+
+    // Helper method to create a test Order Item.
+    private static OrderItem createTestOrderItem(Order o, String productCode) {
+
+        Map<String, Id> mapProdCodeByPbeId = getProdCodeByPbeIdMap();
+
+        OrderItem oi = new OrderItem(
+            OrderId = o.Id,
+            PricebookEntryId = mapProdCodeByPbeId.get(productCode),
+            Quantity = 5,
+            UnitPrice = 100
+        );
+        return oi;
+    }
+
+    // Helper method to check number of Order Items for the Order.
+    private static Integer getNumberOfOrderItems(Order o) {
+        List<OrderItem> lstOIs = [SELECT Id FROM OrderItem WHERE OrderId = :o.Id];
+        return lstOIs.size();
     }
 
 }
