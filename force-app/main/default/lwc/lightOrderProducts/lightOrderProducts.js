@@ -87,6 +87,7 @@ export default class LightOrderProducts extends LightningElement {
             let items = [];
             result.data.forEach(element => {
                 let item = {};
+                item.PbeId = element.PricebookEntryId;
                 item.Name = element.Product2.Name;
                 item.UnitPrice = element.UnitPrice;
                 item.Quantity = element.Quantity;
@@ -163,30 +164,38 @@ export default class LightOrderProducts extends LightningElement {
         
     handleProductAddedMessage(message) {
         console.log('[OrderProductsLWC][handleProductAddedMessage] Message received = ' +JSON.stringify(message));
-        const recordInput = { 
-            apiName: 'OrderItem',
-            fields: 
-            {
-                OrderId: message.orderId,
-                PricebookEntryId: message.orderedProds.PbeId,
-                Quantity: 1,
-                UnitPrice: message.orderedProds.UnitPrice
-            }
-        };
-        console.log('[OrderProductsLWC][handleProductAddedMessage] RecordInput for createRecord = ' +JSON.stringify(recordInput));
-        createRecord(recordInput)
-            .then((oi) => {
-                //refreshApex(this.wiredData);
-                this.dispatchToastSuccess('Product has been added to the Order!');
-            })
-            .catch((error) => {
-                console.log('[OrderProductsLWC][handleProductAddedMessage] createRecord failed with error = ' +JSON.stringify(error));
-                this.dispatchToastError('Error while adding product to the Order');
-            });
+        console.log('[OrderProductsLWC][handleProductAddedMessage] this-orderItems = ' +JSON.stringify(this.orderItems));
+        const alreadyOrdered = this.orderItems.map(item => item.PbeId).includes(message.orderedProds.PbeId);
+        console.log('[OrderProductsLWC][handleProductAddedMessage] alreadyOrdered? = ' +alreadyOrdered);
+        if (alreadyOrdered) {
+
+        }
+        else {
+            const recordInput = { 
+                apiName: 'OrderItem',
+                fields: 
+                {
+                    OrderId: message.orderId,
+                    PricebookEntryId: message.orderedProds.PbeId,
+                    Quantity: 1,
+                    UnitPrice: message.orderedProds.UnitPrice
+                }
+            };
+            console.log('[OrderProductsLWC][handleProductAddedMessage] RecordInput for createRecord = ' +JSON.stringify(recordInput));
+            createRecord(recordInput)
+                .then((oi) => {
+                    refreshApex(this.wiredData);
+                    this.dispatchToastSuccess('Product has been added to the Order!');
+                })
+                .catch((error) => {
+                    console.log('[OrderProductsLWC][handleProductAddedMessage] createRecord failed with error = ' +JSON.stringify(error));
+                    this.dispatchToastError('Error while adding product to the Order');
+                });
+        }
     }
 
 
-
+    /*
     handleAdd() {
         //const fields = {};
         //fields[NAME_FIELD.fieldApiName] = this.name;
@@ -222,6 +231,7 @@ export default class LightOrderProducts extends LightningElement {
                 );
             });
     }
+    */
 
 
 

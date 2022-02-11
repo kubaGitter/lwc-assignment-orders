@@ -1,7 +1,7 @@
 <template>
     <lightning-card title="Light Order Products">
         <lightning-button label="Activate" slot="actions" onclick={handleActivate} variant="success" disabled={wasActivated}></lightning-button>
-        <lightning-button label="Add Prod C" slot="actions" onclick={handleAdd} variant="base"></lightning-button>
+        <!-- <lightning-button label="Add Prod C" slot="actions" onclick={handleAdd} variant="base"></lightning-button> -->
         <template if:true={orderItems}>
                 <!-- sldsValidatorIgnoreNextLine -->
                 <lightning-datatable
