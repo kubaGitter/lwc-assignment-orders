@@ -1,12 +1,20 @@
 <template>
     <lightning-card title="Light Available Products">
-        <template if:true={data}>
+        <template if:true={availableProds}>
                 <!-- sldsValidatorIgnoreNextLine -->
                 <lightning-datatable
                         key-field="Id"
-                        data={data}
-                        columns={columns}>
+                        data={availableProds}
+                        columns={columns}
+                        sorted-by={sortedBy}
+                        sorted-direction={sortedDirection}
+                        onsort={handleColumnSorting}
+                        hide-checkbox-column="true"
+                        >
                 </lightning-datatable>
+        </template>
+        <template if:true={error}>
+            <c-error-panel errors={error}></c-error-panel>
         </template>
     </lightning-card>    
 </template>
