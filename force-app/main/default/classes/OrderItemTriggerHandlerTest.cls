@@ -4,13 +4,15 @@ private with sharing class OrderItemTriggerHandlerTest {
     public OrderItemTriggerHandlerTest() {
     }
 
+    static final string TEST_PB_NAME = 'Test Price Book';
+
     @TestSetup
     static void makeData(){
 
         Id stdPbId = Test.getStandardPricebookId();
 
         Pricebook2 pb = new Pricebook2(
-            Name = 'Test Price Book',
+            Name = TEST_PB_NAME,
             IsActive = true
         );
         insert pb;
@@ -121,7 +123,7 @@ private with sharing class OrderItemTriggerHandlerTest {
     public static void addNewItemToActivatedOrder() {
 
         // Activate one test Order.
-        Order o = [SELECT Id, Status FROM Order LIMIT 1];
+        Order o = getTestOrder();
         o.Status = 'Activated';
         update o;
 
@@ -144,12 +146,30 @@ private with sharing class OrderItemTriggerHandlerTest {
         Test.stopTest();
     }
 
+    // Test method checks if adding a new (not existing) Order Item to the Order works, i.e. allows to add an item.
+    // @TestSetup method added only ProdA to test Order. Now I'm trying to add ProdB.
+    // This should execute successfully.
     @isTest
     public static void addNewItemToDraftOrder() {
 
+        Order o = getTestOrder();
+        Map<String, Id> mapProdCodeByPbeId = getProdCodeByPbeIdMap();
 
+        OrderItem oi = new OrderItem(
+            OrderId = o.Id,
+            PricebookEntryId = mapProdCodeByPbeId.get('PROD_B_TST'),
+            Quantity = 5,
+            UnitPrice = 100
+        );            
 
-        
+        Test.startTest();
+        try {
+            insert oi;
+        }
+        catch (DmlException de) {
+            System.assert(false, 'Insert should succeed but failed due to: ' +de.getMessage());
+        }
+        Test.stopTest();
         
     }
 
@@ -172,10 +192,15 @@ private with sharing class OrderItemTriggerHandlerTest {
 
     /* HELPER METHODS */
 
+    // Helper method which returns an Order to be used in testing.
+    private static Order getTestOrder() {
+        return [SELECT Id, Status FROM Order LIMIT 1];
+    }
+
     // Helper method to produce a Product Code by Pricebook Entry Id map used in testing to simplify adding proper products to test Orders.
     private static Map<String, Id> getProdCodeByPbeIdMap() {
 
-        Id testPb = [SELECT Id FROM Pricebook2 WHERE Name = 'Test Price Book'].Id;
+        Id testPb = [SELECT Id FROM Pricebook2 WHERE Name = :TEST_PB_NAME].Id;
         
         List<PricebookEntry> lstPbes = [SELECT Id, Product2.ProductCode FROM PricebookEntry WHERE Pricebook2Id = :testPb];
         Map<String, Id> mapProdCodeByPbeId = new Map<String, Id>();
