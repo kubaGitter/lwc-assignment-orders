@@ -39,7 +39,7 @@ public with sharing class OrderItemTriggerHandler {
             // If Order related to currently processed OrderItem is present in the set it means it's Activated and operation should be blocked.
             if(activatedOrders.contains(oi.OrderId)) {
                 // Validation error added on a OI record related to activated Order.
-                oi.addError('The order is already activated, no changes are allowed.');
+                oi.addError(Constants.ERRMSG_ORDERITEM_ACTIVATEDORDER);
             }
         }
     }
@@ -54,7 +54,7 @@ public with sharing class OrderItemTriggerHandler {
         List<OrderItem> existingOIs = new List<OrderItem>([SELECT Id, OrderId, PricebookEntryId FROM OrderItem WHERE OrderId IN :orderIds]);
         // If there're no existing Order Items for any of Orders then there's nothing to validate.
         if (existingOIs.isEmpty()) return;
-        
+
         // Then construct a map containing info on which Pricebook Entries are already added to which Orders
         Map<Id, List<Id>> mapOrderIdByExistingPbeId = new Map<Id, List<Id>>();
         for (OrderItem oi : existingOIs) {
@@ -71,7 +71,7 @@ public with sharing class OrderItemTriggerHandler {
         // Having the map prepared, I can use it to search for potential duplicates in records passed to the trigger.
         for (OrderItem oi : newOIs) {
             if (mapOrderIdByExistingPbeId.get(oi.OrderId).contains(oi.PricebookEntryId)) {
-                oi.addError('The product is already on the order and cannot be added as a separate item.');
+                oi.addError(Constants.ERRMSG_ORDERITEM_DUPLICATEITEM);
             }
         }
 
