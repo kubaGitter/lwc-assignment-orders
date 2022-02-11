@@ -69,6 +69,8 @@ private with sharing class OrderItemTriggerHandlerTest {
             Pricebook2Id = pb.Id
         );
         insert c;
+        c.Status = 'Activated';
+        update c;
   
         List<Order> lstOrders = new List<Order>();
         for (Integer i=0; i<100; i++) {
@@ -110,8 +112,67 @@ private with sharing class OrderItemTriggerHandlerTest {
 
     }
 
+    // Test method checking if validation fails on Order Item insert when related Order is activated.
+    @isTest
+    public static void addNewItemToActivatedOrder() {
+
+        // Activate one test Order.
+        Order o = [SELECT Id, Status FROM Order LIMIT 1];
+        o.Status = 'Activated';
+        update o;
+
+        Id testPb = [SELECT Id FROM Pricebook2 WHERE Name = 'Test Price Book'].Id;
+
+        List<PricebookEntry> lstPbes = [SELECT Id, Product2.ProductCode FROM PricebookEntry WHERE Pricebook2Id = :testPb];
+        Map<String, Id> mapProdCodeByPbeId = new Map<String, Id>();
+        for (PricebookEntry pbe : lstPbes) {
+            mapProdCodeByPbeId.put(pbe.Product2.ProductCode, pbe.Id);
+        }
+
+        OrderItem oi = new OrderItem(
+            OrderId = o.Id,
+            PricebookEntryId = mapProdCodeByPbeId.get('TSTPB_PROD_B'),
+            Quantity = 5,
+            UnitPrice = 100
+        );
+            
+        // @TestSetup method added only ProdA to test Order. Now I'm trying to add ProdB.
+        // This should be blocked by Order.Status related validation.
+        Test.startTest();
+        try {
+            insert oi;
+        }
+        catch (DmlException de) {
+            System.assert(de.getMessage().contains(Constants.ERRMSG_ORDERITEM_ACTIVATEDORDER), 'Insert should fail due to parent order being activated.');
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    public static void addNewItemToDraftOrder() {
 
 
+
+        
+        
+    }
+
+
+    @isTest
+    public static void addDuplicateItemToDraftOrder() {
+        
+    }
+
+
+    @isTest
+    public static void modifyItemOnActivatedOrder() {
+        
+    }
+
+    @isTest
+    public static void modifyItemOnDraftOrder() {
+        
+    }
 
 
 
