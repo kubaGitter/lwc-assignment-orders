@@ -112,7 +112,11 @@ private with sharing class OrderItemTriggerHandlerTest {
 
     }
 
+
+
     // Test method checking if validation fails on Order Item insert when related Order is activated.
+    // @TestSetup method added only ProdA to test Order. Now I'm trying to add ProdB.
+    // This should be blocked by Order.Status related validation.
     @isTest
     public static void addNewItemToActivatedOrder() {
 
@@ -121,23 +125,15 @@ private with sharing class OrderItemTriggerHandlerTest {
         o.Status = 'Activated';
         update o;
 
-        Id testPb = [SELECT Id FROM Pricebook2 WHERE Name = 'Test Price Book'].Id;
-
-        List<PricebookEntry> lstPbes = [SELECT Id, Product2.ProductCode FROM PricebookEntry WHERE Pricebook2Id = :testPb];
-        Map<String, Id> mapProdCodeByPbeId = new Map<String, Id>();
-        for (PricebookEntry pbe : lstPbes) {
-            mapProdCodeByPbeId.put(pbe.Product2.ProductCode, pbe.Id);
-        }
+        Map<String, Id> mapProdCodeByPbeId = getProdCodeByPbeIdMap();
 
         OrderItem oi = new OrderItem(
             OrderId = o.Id,
             PricebookEntryId = mapProdCodeByPbeId.get('TSTPB_PROD_B'),
             Quantity = 5,
             UnitPrice = 100
-        );
-            
-        // @TestSetup method added only ProdA to test Order. Now I'm trying to add ProdB.
-        // This should be blocked by Order.Status related validation.
+        );            
+
         Test.startTest();
         try {
             insert oi;
@@ -174,6 +170,21 @@ private with sharing class OrderItemTriggerHandlerTest {
         
     }
 
+    /* HELPER METHODS */
 
+    // Helper method to produce a Product Code by Pricebook Entry Id map used in testing to simplify adding proper products to test Orders.
+    private static Map<String, Id> getProdCodeByPbeIdMap() {
+
+        Id testPb = [SELECT Id FROM Pricebook2 WHERE Name = 'Test Price Book'].Id;
+        
+        List<PricebookEntry> lstPbes = [SELECT Id, Product2.ProductCode FROM PricebookEntry WHERE Pricebook2Id = :testPb];
+        Map<String, Id> mapProdCodeByPbeId = new Map<String, Id>();
+        for (PricebookEntry pbe : lstPbes) {
+            mapProdCodeByPbeId.put(pbe.Product2.ProductCode, pbe.Id);
+        }
+        
+        return mapProdCodeByPbeId;
+
+    }
 
 }
