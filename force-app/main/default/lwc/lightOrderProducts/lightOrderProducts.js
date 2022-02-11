@@ -4,6 +4,7 @@ import { refreshApex } from '@salesforce/apex';
 import { reduceErrors } from 'c/ldsUtils';
 import { getRecord } from 'lightning/uiRecordApi';
 import { createRecord } from 'lightning/uiRecordApi';
+import { updateRecord } from 'lightning/uiRecordApi';
 
 //import ORDERITEM_OBJECT from '@salesforce/schema/OrderItem';
 //import NAME_FIELD from '@salesforce/schema/Account.Name';
@@ -87,6 +88,7 @@ export default class LightOrderProducts extends LightningElement {
             let items = [];
             result.data.forEach(element => {
                 let item = {};
+                item.OiId = element.Id;
                 item.PbeId = element.PricebookEntryId;
                 item.Name = element.Product2.Name;
                 item.UnitPrice = element.UnitPrice;
@@ -167,9 +169,32 @@ export default class LightOrderProducts extends LightningElement {
         console.log('[OrderProductsLWC][handleProductAddedMessage] this-orderItems = ' +JSON.stringify(this.orderItems));
         const alreadyOrdered = this.orderItems.map(item => item.PbeId).includes(message.orderedProds.PbeId);
         console.log('[OrderProductsLWC][handleProductAddedMessage] alreadyOrdered? = ' +alreadyOrdered);
-        if (alreadyOrdered) {
 
+        if (alreadyOrdered) {
+            // Among items which are already ordered, I'm checking for one which matches PricebookEntry which was provided in the message
+            const orderItem = this.orderItems.find(item => item.PbeId == message.orderedProds.PbeId);
+            let oiId = orderItem.OiId;
+            let oiNewQuantity = orderItem.Quantity+1;
+            console.log('[OrderProductsLWC][handleProductAddedMessage] Id of already ordered item = '+JSON.stringify(orderItem));
+            const recordInput = { 
+                fields: 
+                {
+                    Id: oiId,
+                    Quantity: oiNewQuantity
+                }
+            };
+            console.log('[OrderProductsLWC][handleProductAddedMessage] RecordInput for updateRecord = ' +JSON.stringify(recordInput));
+            updateRecord(recordInput)
+                .then((oi) => {
+                    refreshApex(this.wiredData);
+                    this.dispatchToastSuccess('Quantity of selected product has been increased!');
+                })
+                .catch((error) => {
+                    console.log('[OrderProductsLWC][handleProductAddedMessage] updateRecord failed with error = ' +JSON.stringify(error));
+                    this.dispatchToastError('Error while increasing quantity of the product');
+                });
         }
+
         else {
             const recordInput = { 
                 apiName: 'OrderItem',
