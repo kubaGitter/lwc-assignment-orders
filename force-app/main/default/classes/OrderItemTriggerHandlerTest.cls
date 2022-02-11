@@ -129,7 +129,7 @@ private with sharing class OrderItemTriggerHandlerTest {
 
         OrderItem oi = new OrderItem(
             OrderId = o.Id,
-            PricebookEntryId = mapProdCodeByPbeId.get('TSTPB_PROD_B'),
+            PricebookEntryId = mapProdCodeByPbeId.get('PROD_B_TST'),
             Quantity = 5,
             UnitPrice = 100
         );            
