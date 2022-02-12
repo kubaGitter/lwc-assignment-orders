@@ -7,17 +7,18 @@ import { createRecord } from 'lightning/uiRecordApi';
 import { updateRecord } from 'lightning/uiRecordApi';
 
 //import ORDERITEM_OBJECT from '@salesforce/schema/OrderItem';
-//import NAME_FIELD from '@salesforce/schema/Account.Name';
+import ORDER_STATUSCODE_FIELD from '@salesforce/schema/Order.StatusCode';
 
 import  getOrderProducts from '@salesforce/apex/OrderProductsController.getOrderProducts';
 import  activateOrder from '@salesforce/apex/OrderProductsController.activateOrder';
 
-import { subscribe, MessageContext } from 'lightning/messageService';
+import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import PRODUCT_ADDED_CHANNEL from '@salesforce/messageChannel/productAddedToOrder__c';
+import ORDER_ACTIVATED_CHANNEL from '@salesforce/messageChannel/orderActivated__c';
 //import OrderProducts from '../orderProducts/orderProducts';
 
 
-const FIELDS = ['Order.Pricebook2Id', 'Order.StatusCode'];
+//const FIELDS = ['Order.Pricebook2Id', 'Order.StatusCode'];
 const COLS = [
     {
         label: 'Product Name',
@@ -60,7 +61,7 @@ export default class LightOrderProducts extends LightningElement {
     @wire(MessageContext)
     messageContext;
     
-    @wire(getRecord, { recordId: '$recordId', fields: FIELDS}) 
+    @wire(getRecord, { recordId: '$recordId', fields: [ORDER_STATUSCODE_FIELD]}) 
     wiredOrder(result) {
         if (result.data) {
             this.orderStatus = result.data.fields.StatusCode.value;
@@ -107,11 +108,34 @@ export default class LightOrderProducts extends LightningElement {
     }
 
     handleActivate(evt) {
+        const recordInput = { 
+            fields: 
+            {
+                Id: this.recordId,
+                Status: 'Activated'
+            }
+        };
+        console.log('[OrderProductsLWC][handleActivate] RecordInput for updateRecord = ' +JSON.stringify(recordInput));
+        updateRecord(recordInput)
+            .then((oi) => {
+                refreshApex(this.wiredData);
+                //this.dispatchActivationMessage();
+                this.dispatchToastSuccess('Order activated!');
+            })
+            .catch((error) => {
+                console.log('[OrderProductsLWC][handleActivate] updateRecord failed with error = ' +JSON.stringify(error));
+                this.dispatchToastError('Error while activating order!');
+            });
+    }
+
+    /*
+    handleActivate(evt) {
         console.log('handleActivate(evt)');
         activateOrder( { orderId: this.recordId } )
             .then(result => {
                 this.wasActivated = true;
                 this.dispatchToast('Order activated!', 'success');
+                this.dispatchActivationMessage();
                 console.log('Success at activation');
                 // force refresh of the page to reflect the change of status
                 eval("$A.get('e.force:refreshView').fire();");
@@ -121,6 +145,7 @@ export default class LightOrderProducts extends LightningElement {
                 this.dispatchToast(error.body.message, 'error');
             });
     }
+    */
 
     handleColumnSorting(event) {
         var fieldName = event.detail.fieldName;
@@ -220,47 +245,14 @@ export default class LightOrderProducts extends LightningElement {
     }
 
 
-    /*
-    handleAdd() {
-        //const fields = {};
-        //fields[NAME_FIELD.fieldApiName] = this.name;
-        const recordInput = { 
-            apiName: 'OrderItem',
-            fields: 
-            {
-                OrderId: this.recordId,
-                PricebookEntryId: '01u0E00000y4V8XQAU',
-                Quantity: 9,
-                UnitPrice: 99
-            } 
-        };
-        createRecord(recordInput)
-            .then((oi) => {
-                //this.accountId = account.id;
-                refreshApex(this.wiredData);
-                this.dispatchEvent(
-                    new ShowToastEvent({
-                        title: 'Success',
-                        message: 'OI created',
-                        variant: 'success'
-                    })
-                );
-            })
-            .catch((error) => {
-                this.dispatchEvent(
-                    new ShowToastEvent({
-                        title: 'Error creating record',
-                        message: reduceErrors(error).join(', '),
-                        variant: 'error'
-                    })
-                );
-            });
-    }
-    */
-
-
 
     /* HELPER METHODS */
+
+    dispatchActivationMessage() {
+        const payload = { orderId: this.recordId };
+        publish(this.messageContext, ORDER_ACTIVATED_CHANNEL, payload);
+        console.log('[OrderProductsLWC][dispatchActivationMessage] Sending ORDER_ACTIVATED_CHANNEL message = ' +JSON.stringify(payload));
+    }
 
     dispatchToast(msg, type) {
         this.dispatchEvent(
