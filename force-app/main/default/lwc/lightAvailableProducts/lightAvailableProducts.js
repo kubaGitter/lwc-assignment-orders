@@ -16,9 +16,10 @@ import PRODUCTS_ORDERED_CHANNEL from '@salesforce/messageChannel/productsOrdered
 const FIELDS = ['Order.Pricebook2Id', 'Order.StatusCode'];
 const COLS = [
     {
-        label: 'Name', 
+        label: 'Product Name', 
         fieldName: 'ProductName', 
-        type: 'text'
+        type: 'text',
+        sortable: true
     },
     {
         label: 'List Price', 
@@ -53,6 +54,8 @@ export default class LightAvailableProducts extends LightningElement {
     error;
     orderStatus; //@track
     @api recordId;
+    @track sortedBy = 'ProductName';
+    @track sortedDirection = 'asc';
  
     @wire(MessageContext)
     messageContext;
@@ -142,6 +145,15 @@ export default class LightAvailableProducts extends LightningElement {
         // Re-sorting is required as new product was added to the order
         this.sortAvailableProducts();
     }
+
+    handleColumnSorting(event) {
+        var fieldName = event.detail.fieldName;
+        var sortDirection = event.detail.sortDirection;
+        // assign the latest attribute with the sorted column fieldName and sorted direction
+        this.sortedBy = fieldName;
+        this.sortedDirection = sortDirection;
+        this.data = this.sortAvailableProducts();
+   }
     
     sortAvailableProducts() {
         console.log('[AvailableProductsLWC][sortAvailableProducts] Sorting available products');
@@ -151,8 +163,9 @@ export default class LightAvailableProducts extends LightningElement {
             let prodsNotOrdered = this.availableProds.filter(item => { return !this.orderProdIds.includes(item.PbeId) });
 
             // Sort alphabetically products ordered and not ordered (separately)
-            prodsOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
-            prodsNotOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
+            let isReverse = this.sortedDirection === 'asc' ? 1 : -1;
+            prodsOrdered.sort((a, b) => { return isReverse * (a.ProductName > b.ProductName ? 1 : -1); });
+            prodsNotOrdered.sort((a, b) => { return isReverse * (a.ProductName > b.ProductName ? 1 : -1); });
 
             // Store results of sorting to availableProds and refresh
             let prodsSorted = [];
