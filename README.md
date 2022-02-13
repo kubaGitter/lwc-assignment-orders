@@ -33,10 +33,11 @@ Implemented in lightOrderProduct LWC and OrderProductsController, OrderItemTrigg
 
 ## 6. Test coverage
 
-- AvailableProductsController - X% of coverage
+- AvailableProductsController - 100% of coverage
 - OrderItemTrigger - 100% of coverage
 - OrderItemTriggerHandler - 93% of coverage
-- OrderProductsController - X% of coverage
+- OrderProductsController - 100% of coverage
+- Overall - 95% of coverage
 
 # Extra Acceptance Criteria
 
@@ -48,6 +49,7 @@ Solution implemented as two independent LWC which can be placed anywhere on the 
 # Further considerations and possible enhancements
 - The productsOrdered message channel is currently used even in a situation when no new product is added to the order (that's the case when quantity is increased). This is not necessary since the list of ordered products which is sent using the channel does not change. It might have some impact on performance when significant number of products is added to single order.
 - Testing of LWC could use Jest framework to ensure proper quality by preparing JavaScript based unit tests for components.
+- OrderItemTriggerHandler currently doesn't block deletion of Order Products when Order is Activated. This operation looks blocked from standard UI but might be available through API. If required, trigger could be extended to cover such cases.
 - ...
 
 
