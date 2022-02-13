@@ -1,4 +1,5 @@
 import { LightningElement, wire, api, track } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getRecord } from 'lightning/uiRecordApi';
 //import { reduceErrors } from 'c/ldsUtils';
@@ -10,7 +11,7 @@ import getAvailableProducts from '@salesforce/apex/AvailableProductsController.g
 
 import { publish, subscribe, MessageContext } from 'lightning/messageService';
 import PRODUCT_ADDED_CHANNEL from '@salesforce/messageChannel/productAddedToOrder__c';
-//import ORDER_ACTIVATED_CHANNEL from '@salesforce/messageChannel/orderActivated__c';
+import PRODUCTS_ORDERED_CHANNEL from '@salesforce/messageChannel/productsOrdered__c';
 
 const FIELDS = ['Order.Pricebook2Id', 'Order.StatusCode'];
 const COLS = [
@@ -47,12 +48,12 @@ export default class LightAvailableProducts extends LightningElement {
     pbId;
     wiredData; //@track
     wiredOrder; //@track
-    availableProds; //@track
+    @track availableProds; //@track
+    orderProdIds;
     error;
     orderStatus; //@track
     @api recordId;
-    @track canAddToOrder = true;
-
+ 
     @wire(MessageContext)
     messageContext;
 
@@ -90,6 +91,7 @@ export default class LightAvailableProducts extends LightningElement {
             });
             this.availableProds = prods;
             this.error = undefined;
+            this.sortAvailableProducts();
             console.log('[@wire, wiredAvailableProducts] data=' +JSON.stringify(result.data));
         }
         else if (result.error) {
@@ -119,26 +121,89 @@ export default class LightAvailableProducts extends LightningElement {
     
 
     // Use standard lifecycle hook to subscribe to message channel
-    /*
     connectedCallback() {
         this.subscribeToMessageChannel();
     }
 
     subscribeToMessageChannel() {
-        console.log('[AvailableProductsLWC][subscribeToMessageChannel] Subscribing to ORDER_ACTIVATED_CHANNEL message');
+        console.log('[AvailableProductsLWC][subscribeToMessageChannel] Subscribing to PRODUCTS_ORDERED_CHANNEL message');
         this.subscription = subscribe(
             this.messageContext,
-            ORDER_ACTIVATED_CHANNEL,
-            (message) => this.handleOrderActivatedMessage(message)
+            PRODUCTS_ORDERED_CHANNEL,
+            (message) => this.handleProductsOrderedMessage(message)
             );
         }
         
-    handleOrderActivatedMessage(message) {
-        console.log('[AvailableProductsLWC][handleOrderActivatedMessage] Handle ORDER_ACTIVATED_CHANNEL message');
-        this.canAddToOrder = false;
-        this.refreshActionButtons();
+    handleProductsOrderedMessage(message) {
+        console.log('[AvailableProductsLWC][handleProductsOrderedMessage] Handle PRODUCTS_ORDERED_CHANNEL message = ' +JSON.stringify(message));
+        //console.log('[AvailableProductsLWC][handleProductsOrderedMessage] orderProdIds BEFORE updated = ' +JSON.stringify(this.orderProdIds));
+        let tmpOrderProds = message.orderedPbeIds;
+        this.orderProdIds = tmpOrderProds;
+        //console.log('[AvailableProductsLWC][handleProductsOrderedMessage] orderProdIds AFTER updated = ' +JSON.stringify(this.orderProdIds));
+        this.sortAvailableProducts();
     }
-    */
+    
+    sortAvailableProducts() {
+        console.log('[AvailableProductsLWC][sortAvailableProducts] Sorting available products');
+        /*
+        this.availProds.sort((a, b) => {
+            // Sorting by ordered products first
+            return this.orderProdIds.includes(a.Id) && !this.orderProdIds.includes(b.Id) ? -1 : 1;
+            // Sorting alphabetically
+            //return a.ProductName > b.ProductName ? 1 : -1;
+        })*/
+        
+        console.log('[AvailableProductsLWC][sortAvailableProducts] Available products BEFORE sorting = ' +JSON.stringify(this.availableProds));
+        console.log('[AvailableProductsLWC][sortAvailableProducts] Ordered products = ' +JSON.stringify(this.orderProdIds));
+        if (this.availableProds) {
+            console.log('[AvailableProductsLWC][sortAvailableProducts] Actual sorting started');
+            //let prods = this.availableProds;
+            
+            let prodsOrdered = this.availableProds.filter(item => { return this.orderProdIds.includes(item.PbeId) });
+            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsOrdered BEFORE = ' +JSON.stringify(prodsOrdered));
+            let prodsNotOrdered = this.availableProds.filter(item => { return !this.orderProdIds.includes(item.PbeId) });
+            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsNotOrdered BEFORE = ' +JSON.stringify(prodsNotOrdered));
+            
+            prodsOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
+            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsOrdered AFTER = ' +JSON.stringify(prodsOrdered));
+            prodsNotOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
+            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsNotOrdered AFTER = ' +JSON.stringify(prodsNotOrdered));
+
+            let prodsSorted = [];
+            prodsOrdered.forEach(item => prodsSorted.push(item));
+            prodsNotOrdered.forEach(item => prodsSorted.push(item));
+            //prodsSorted.push(prodsOrdered);
+            //prodsSorted.push(prodsNotOrdered);
+            this.availableProds = prodsSorted;
+
+            /*
+            prods.sort((a, b) => {
+                let sortDecision;
+                if (this.orderProdIds.includes(a.PbeId) && !this.orderProdIds.includes(b.PbeId)) {
+                    return -1;
+                }
+                else {
+                    return a.ProductName > b.ProductName ? 1 : -1;
+                }
+                //return this.orderProdIds.includes(a.PbeId) && !this.orderProdIds.includes(b.PbeId) ? -1 : 1;
+            });
+            this.availableProds = prods;
+            */
+
+            refreshApex(this.wiredData);
+            console.log('[AvailableProductsLWC][sortAvailableProducts] Available products AFTER sorting = ' +JSON.stringify(this.availableProds));
+        }
+        else {
+            console.log('[AvailableProductsLWC][sortAvailableProducts] Tried to sort available products but the array is empty now');
+        }
+        
+        //this.wiredDataResult = [];
+        //this.availProds = [];
+        //this.wiredDataResult = prods;
+        //this.wiredData = prods;
+        
+        //console.log('sortDatatable: ' +JSON.stringify(prods));
+    }
 
 
     

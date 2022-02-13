@@ -14,7 +14,8 @@ import  activateOrder from '@salesforce/apex/OrderProductsController.activateOrd
 
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import PRODUCT_ADDED_CHANNEL from '@salesforce/messageChannel/productAddedToOrder__c';
-import ORDER_ACTIVATED_CHANNEL from '@salesforce/messageChannel/orderActivated__c';
+import PRODUCTS_ORDERED_CHANNEL from '@salesforce/messageChannel/productsOrdered__c';
+//import ORDER_ACTIVATED_CHANNEL from '@salesforce/messageChannel/orderActivated__c';
 //import OrderProducts from '../orderProducts/orderProducts';
 
 
@@ -100,6 +101,11 @@ export default class LightOrderProducts extends LightningElement {
             this.orderItems = items;
             this.sortData(this.sortedBy, this.sortedDirection);
             this.error = undefined;
+
+            // Publish an event containing Ids of all Pricebook entries which are already ordered so that other components are aware
+            const payload = { orderId: this.recordId, orderedPbeIds: this.orderItems.map(item => item.PbeId) };
+            console.log('[OrderProductsLWC][getOrderProducts] Prepare payload and send PRODUCTS_ORDERED_CHANNEL message: ' +JSON.stringify(payload));
+            publish(this.messageContext, PRODUCTS_ORDERED_CHANNEL, payload);
         }
         else if (result.error) {
             this.orderItems = undefined;
