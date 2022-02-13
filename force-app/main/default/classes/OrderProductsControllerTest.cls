@@ -144,7 +144,7 @@ public with sharing class OrderProductsControllerTest {
 
         Test.startTest();
         lstOI1 = OrderProductsController.getOrderProducts(o1Id);
-        lstOI1 = OrderProductsController.getOrderProducts(o2Id);
+        lstOI2 = OrderProductsController.getOrderProducts(o2Id);
         Test.stopTest();
 
         System.assertEquals(2, lstOI1.size(), 'There should be 2 order items for order for \'TEST_ACC1_NAME\'');
