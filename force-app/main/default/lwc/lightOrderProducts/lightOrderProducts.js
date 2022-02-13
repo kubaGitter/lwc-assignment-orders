@@ -53,8 +53,8 @@ export default class LightOrderProducts extends LightningElement {
     pbId;
     orderStatus;
     @api recordId;
-    @track sortedBy;
-    @track sortedDirection;
+    @track sortedBy = 'Name';
+    @track sortedDirection = 'asc';
     @track wasActivated;
     
 
@@ -98,6 +98,7 @@ export default class LightOrderProducts extends LightningElement {
                 items.push(item);
             });
             this.orderItems = items;
+            this.sortData(this.sortedBy, this.sortedDirection);
             this.error = undefined;
         }
         else if (result.error) {
@@ -157,6 +158,7 @@ export default class LightOrderProducts extends LightningElement {
    }
 
     sortData(fieldname, direction) {
+        console.log('[OrderProducts][sortData] Sorting ordered products.')
         let parseData = JSON.parse(JSON.stringify(this.orderItems));
         // Return the value stored in the field
         let keyValue = (a) => {
