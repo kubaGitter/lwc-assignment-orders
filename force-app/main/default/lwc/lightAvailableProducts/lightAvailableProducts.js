@@ -136,73 +136,34 @@ export default class LightAvailableProducts extends LightningElement {
         
     handleProductsOrderedMessage(message) {
         console.log('[AvailableProductsLWC][handleProductsOrderedMessage] Handle PRODUCTS_ORDERED_CHANNEL message = ' +JSON.stringify(message));
-        //console.log('[AvailableProductsLWC][handleProductsOrderedMessage] orderProdIds BEFORE updated = ' +JSON.stringify(this.orderProdIds));
+        // Update orderProdIds (i.e. list of Pricebook Entry Ids) based on the message
         let tmpOrderProds = message.orderedPbeIds;
         this.orderProdIds = tmpOrderProds;
-        //console.log('[AvailableProductsLWC][handleProductsOrderedMessage] orderProdIds AFTER updated = ' +JSON.stringify(this.orderProdIds));
+        // Re-sorting is required as new product was added to the order
         this.sortAvailableProducts();
     }
     
     sortAvailableProducts() {
         console.log('[AvailableProductsLWC][sortAvailableProducts] Sorting available products');
-        /*
-        this.availProds.sort((a, b) => {
-            // Sorting by ordered products first
-            return this.orderProdIds.includes(a.Id) && !this.orderProdIds.includes(b.Id) ? -1 : 1;
-            // Sorting alphabetically
-            //return a.ProductName > b.ProductName ? 1 : -1;
-        })*/
-        
-        console.log('[AvailableProductsLWC][sortAvailableProducts] Available products BEFORE sorting = ' +JSON.stringify(this.availableProds));
-        console.log('[AvailableProductsLWC][sortAvailableProducts] Ordered products = ' +JSON.stringify(this.orderProdIds));
         if (this.availableProds) {
-            console.log('[AvailableProductsLWC][sortAvailableProducts] Actual sorting started');
-            //let prods = this.availableProds;
-            
+            // Create separate arrays for products ordered and not ordered
             let prodsOrdered = this.availableProds.filter(item => { return this.orderProdIds.includes(item.PbeId) });
-            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsOrdered BEFORE = ' +JSON.stringify(prodsOrdered));
             let prodsNotOrdered = this.availableProds.filter(item => { return !this.orderProdIds.includes(item.PbeId) });
-            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsNotOrdered BEFORE = ' +JSON.stringify(prodsNotOrdered));
-            
-            prodsOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
-            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsOrdered AFTER = ' +JSON.stringify(prodsOrdered));
-            prodsNotOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
-            console.log('[AvailableProductsLWC][sortAvailableProducts] prodsNotOrdered AFTER = ' +JSON.stringify(prodsNotOrdered));
 
+            // Sort alphabetically products ordered and not ordered (separately)
+            prodsOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
+            prodsNotOrdered.sort((a, b) => a.ProductName > b.ProductName ? 1 : -1);
+
+            // Store results of sorting to availableProds and refresh
             let prodsSorted = [];
             prodsOrdered.forEach(item => prodsSorted.push(item));
             prodsNotOrdered.forEach(item => prodsSorted.push(item));
-            //prodsSorted.push(prodsOrdered);
-            //prodsSorted.push(prodsNotOrdered);
             this.availableProds = prodsSorted;
-
-            /*
-            prods.sort((a, b) => {
-                let sortDecision;
-                if (this.orderProdIds.includes(a.PbeId) && !this.orderProdIds.includes(b.PbeId)) {
-                    return -1;
-                }
-                else {
-                    return a.ProductName > b.ProductName ? 1 : -1;
-                }
-                //return this.orderProdIds.includes(a.PbeId) && !this.orderProdIds.includes(b.PbeId) ? -1 : 1;
-            });
-            this.availableProds = prods;
-            */
-
             refreshApex(this.wiredData);
-            console.log('[AvailableProductsLWC][sortAvailableProducts] Available products AFTER sorting = ' +JSON.stringify(this.availableProds));
         }
         else {
             console.log('[AvailableProductsLWC][sortAvailableProducts] Tried to sort available products but the array is empty now');
         }
-        
-        //this.wiredDataResult = [];
-        //this.availProds = [];
-        //this.wiredDataResult = prods;
-        //this.wiredData = prods;
-        
-        //console.log('sortDatatable: ' +JSON.stringify(prods));
     }
 
 
