@@ -2,7 +2,6 @@ import { LightningElement, wire, api, track } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getRecord } from 'lightning/uiRecordApi';
-//import { reduceErrors } from 'c/ldsUtils';
 
 import ORDER_STATUSCODE_FIELD from '@salesforce/schema/Order.StatusCode';
 import ORDER_PRICEBOOKID_FIELD from '@salesforce/schema/Order.Pricebook2Id';
@@ -13,7 +12,6 @@ import { publish, subscribe, MessageContext } from 'lightning/messageService';
 import PRODUCT_ADDED_CHANNEL from '@salesforce/messageChannel/productAddedToOrder__c';
 import PRODUCTS_ORDERED_CHANNEL from '@salesforce/messageChannel/productsOrdered__c';
 
-const FIELDS = ['Order.Pricebook2Id', 'Order.StatusCode'];
 const COLS = [
     {
         label: 'Product Name', 
@@ -47,12 +45,12 @@ export default class LightAvailableProducts extends LightningElement {
     columns = COLS;
     subscription = null;
     pbId;
-    wiredData; //@track
-    wiredOrder; //@track
-    @track availableProds; //@track
+    wiredData;
+    wiredOrder;
+    @track availableProds;
     orderProdIds;
     error;
-    orderStatus; //@track
+    orderStatus;
     @api recordId;
     @track sortedBy = 'ProductName';
     @track sortedDirection = 'asc';
@@ -182,11 +180,6 @@ export default class LightAvailableProducts extends LightningElement {
 
     
     /* HELPER METHODS */
-
-    refreshActionButtons() {
-        // Update disabled attribute on Order column in datatable
-        this.columns[2].typeAttributes.disabled = this.orderStatus == 'Activated' ? true : false;
-    }
 
     dispatchToastSuccess(msg) {
         this.dispatchEvent(

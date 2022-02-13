@@ -6,20 +6,14 @@ import { getRecord } from 'lightning/uiRecordApi';
 import { createRecord } from 'lightning/uiRecordApi';
 import { updateRecord } from 'lightning/uiRecordApi';
 
-//import ORDERITEM_OBJECT from '@salesforce/schema/OrderItem';
 import ORDER_STATUSCODE_FIELD from '@salesforce/schema/Order.StatusCode';
 
 import  getOrderProducts from '@salesforce/apex/OrderProductsController.getOrderProducts';
-import  activateOrder from '@salesforce/apex/OrderProductsController.activateOrder';
 
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import PRODUCT_ADDED_CHANNEL from '@salesforce/messageChannel/productAddedToOrder__c';
 import PRODUCTS_ORDERED_CHANNEL from '@salesforce/messageChannel/productsOrdered__c';
-//import ORDER_ACTIVATED_CHANNEL from '@salesforce/messageChannel/orderActivated__c';
-//import OrderProducts from '../orderProducts/orderProducts';
 
-
-//const FIELDS = ['Order.Pricebook2Id', 'Order.StatusCode'];
 const COLS = [
     {
         label: 'Product Name',
@@ -74,14 +68,6 @@ export default class LightOrderProducts extends LightningElement {
 
         }
     }
-    /*order;
-    get pbId() {
-        return this.order.data.fields.Pricebook2Id.value;
-    }
-    get orderStatus() {
-        return this.order.data.fields.StatusCode.value;
-    }*/
-
     
     @wire(getOrderProducts, { orderId: '$recordId' })
     wiredOrderProducts(result) {
@@ -126,7 +112,6 @@ export default class LightOrderProducts extends LightningElement {
         updateRecord(recordInput)
             .then((oi) => {
                 refreshApex(this.wiredData);
-                //this.dispatchActivationMessage();
                 this.dispatchToastSuccess('Order activated!');
             })
             .catch((error) => {
@@ -135,29 +120,9 @@ export default class LightOrderProducts extends LightningElement {
             });
     }
 
-    /*
-    handleActivate(evt) {
-        console.log('handleActivate(evt)');
-        activateOrder( { orderId: this.recordId } )
-            .then(result => {
-                this.wasActivated = true;
-                this.dispatchToast('Order activated!', 'success');
-                this.dispatchActivationMessage();
-                console.log('Success at activation');
-                // force refresh of the page to reflect the change of status
-                eval("$A.get('e.force:refreshView').fire();");
-            })
-            .catch(error => {
-                console.log('Error at activation: ' +JSON.stringify(error));
-                this.dispatchToast(error.body.message, 'error');
-            });
-    }
-    */
-
     handleColumnSorting(event) {
         var fieldName = event.detail.fieldName;
         var sortDirection = event.detail.sortDirection;
-        // assign the latest attribute with the sorted column fieldName and sorted direction
         this.sortedBy = fieldName;
         this.sortedDirection = sortDirection;
         this.data = this.sortData(fieldName, sortDirection);

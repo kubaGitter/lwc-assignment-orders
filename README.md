@@ -1,3 +1,6 @@
+# Installation
+This is sfdx project, please clone it and deploy to org (I used scratch org). It requires some data in place in order to demonstrate how it works. The Order_Record_Page_Light flexi page (Lightning Page) is the one showing the latest implementation approach. It consists of two LWC components added to the page - lightAvailableProducts and lightOrderProducts. It may need to be activated properly (i.e. assigned as org default) in order to see it for Orders.
+
 # Acceptance Criteria
 
 ## 1. The solution is available as a repository on GitHub/Bitbucket etc
@@ -50,6 +53,7 @@ Solution implemented as two independent LWC which can be placed anywhere on the 
 - The productsOrdered message channel is currently used even in a situation when no new product is added to the order (that's the case when quantity is increased). This is not necessary since the list of ordered products which is sent using the channel does not change. It might have some impact on performance when significant number of products is added to single order.
 - Testing of LWC could use Jest framework to ensure proper quality by preparing JavaScript based unit tests for components.
 - OrderItemTriggerHandler currently doesn't block deletion of Order Products when Order is Activated. This operation looks blocked from standard UI but might be available through API. If required, trigger could be extended to cover such cases.
+- When there are no records for available products or order products, a relevant note may be appearing instead of or right below the data table to explain why the data is missing.
 - ...
 
 
