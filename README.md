@@ -1,5 +1,5 @@
 # Installation
-This is sfdx project, please clone it and deploy to org (I used scratch org). It requires some data in place in order to demonstrate how it works. The Order_Record_Page_Light flexi page (Lightning Page) is the one showing the latest implementation approach. It consists of two LWC components added to the page - lightAvailableProducts and lightOrderProducts. It may need to be activated properly (i.e. assigned as org default) in order to see it for Orders.
+This is sfdx project, please clone it and deploy to org (I used scratch org). It requires some data in place in order to demonstrate how it works (Account, Contract, Products with Pricebook Entries). The Order_Record_Page_Light flexi page (Lightning Page) is the one showing the latest implementation approach. It consists of two LWC components added to the page - lightAvailableProducts and lightOrderProducts. Page may need to be activated properly (i.e. assigned as org default) in order to see it on Orders.
 
 # Acceptance Criteria
 
@@ -54,24 +54,6 @@ Solution implemented as two independent LWC which can be placed anywhere on the 
 - Testing of LWC could use Jest framework to ensure proper quality by preparing JavaScript based unit tests for components.
 - OrderItemTriggerHandler currently doesn't block deletion of Order Products when Order is Activated. This operation looks blocked from standard UI but might be available through API. If required, trigger could be extended to cover such cases.
 - When there are no records for available products or order products, a relevant note may be appearing instead of or right below the data table to explain why the data is missing.
-- ...
-
-
-# Salesforce DX Project: Next Steps
-
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
-
-## How Do You Plan to Deploy Your Changes?
-
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
-
-## Configure Your Salesforce DX Project
-
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
-
-## Read All About It
-
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
+- Products Available which are already ordered are sorted on the top but it would be helpful if were visually distinguished, e.g. by using a different color of background.
+- Name of a product being added to the order could be displayed on the green toast (the message showing for a moment on the top of the page).
+- Error message could be a little more elaborate, e.g. when Order cannot be activated due to the fact that Contract is not activated, the message should display that.
