@@ -3,72 +3,23 @@ public with sharing class AvailableProductsControllerTest {
     
     static final string TEST_PB1_NAME = 'Test Price Book 1';
     static final string TEST_PB2_NAME = 'Test Price Book 2';
+    static final string TEST_PROD1_CODE = 'Test Product 1';
+    static final string TEST_PROD2_CODE = 'Test Product 2';
 
     @TestSetup
     static void makeData(){
 
         Id stdPbId = Test.getStandardPricebookId();
-
-        Pricebook2 pb1 = new Pricebook2(
-            Name = TEST_PB1_NAME,
-            IsActive = true
-        );
-        insert pb1;
+        Id tstPb1Id = TestDataFactory.createPriceBook(TEST_PB1_NAME);
+        Id tstPb2Id = TestDataFactory.createPriceBook(TEST_PB2_NAME);
+        Product2 prodA = TestDataFactory.createProduct('Test Product A', TEST_PROD1_CODE);
+        Product2 prodB = TestDataFactory.createProduct('Test Product B', TEST_PROD2_CODE);
+        PricebookEntry stdPbeA = TestDataFactory.createPricebookEntry(stdPbId, prodA.Id, 100);
+        PricebookEntry tstPbeA1 = TestDataFactory.createPricebookEntry(tstPb1Id, prodA.Id, 100);
+        PricebookEntry tstPbeA2 = TestDataFactory.createPricebookEntry(tstPb2Id, prodA.Id, 100);
+        PricebookEntry stdPbeB = TestDataFactory.createPricebookEntry(stdPbId, prodB.Id, 200);
+        PricebookEntry tstPbeB1 = TestDataFactory.createPricebookEntry(tstPb1Id, prodB.Id, 200);
         
-        Pricebook2 pb2 = new Pricebook2(
-            Name = TEST_PB2_NAME,
-            IsActive = true
-        );
-        insert pb2;
-
-        Product2 prodA = new Product2(
-            Name = 'Test Product A',
-            ProductCode = 'PROD_A_TST',
-            IsActive = true
-        );
-        insert prodA;
-
-        Product2 prodB = new Product2(
-            Name = 'Test Product B',
-            ProductCode = 'PROD_B_TST',
-            IsActive = true
-        );
-        insert prodB;
-        
-        PricebookEntry stdPbeA = new PricebookEntry(
-            Pricebook2Id = stdPbId,
-            Product2Id = prodA.Id,
-            UnitPrice = 100
-        );
-        insert stdPbeA;
-        
-        PricebookEntry pbeA1 = new PricebookEntry(
-            Pricebook2Id = pb1.Id,
-            Product2Id = prodA.Id,
-            UnitPrice = 100
-        );
-        insert pbeA1;
-        
-        PricebookEntry pbeA2 = new PricebookEntry(
-            Pricebook2Id = pb2.Id,
-            Product2Id = prodA.Id,
-            UnitPrice = 100
-        );
-        insert pbeA2;
-
-        PricebookEntry stdPbeB = new PricebookEntry(
-            Pricebook2Id = stdPbId,
-            Product2Id = prodB.Id,
-            UnitPrice = 200
-        );
-        insert stdPbeB;
-            
-        PricebookEntry pbeB1 = new PricebookEntry(
-            Pricebook2Id = pb1.Id,
-            Product2Id = prodB.Id,
-            UnitPrice = 200
-        );
-        insert pbeB1;
     }
 
     // Test case to verify that only products belonging to given price book are returned.
